@@ -3,12 +3,13 @@
 #include<stdbool.h>
 #include<time.h>
 
+void playBot();//  for play with bot mode
+void multiplayer();//  for play multiplayer mode
 void play(int a[][3], int row, int coln, int turns); //accepts player moves
 bool win(int a[][3]); //check win conditions
-void display(int a[][3]);// display the board
-void multiplayer();//  for play multiplayer mode
-void playBot();//  for play with bot mode
-bool validateMove(int row,int coln,int a[][3],int turns,bool isBot);//check if the move is valid or not
+void display(int a[][3],int turns);// display the board
+void convertMoves(int move, int *row,int* coln);// converts move into row & coln
+bool validateMove(int row,int coln,int a[][3],bool isBot);//check if the move is valid or not
 void botMove(int a[][3]);//gives the bot's move
 void delayBotMove();//delays bot move by 2sec
 
@@ -23,7 +24,7 @@ int main() {
         printf("\n[3]. exit\n");
         scanf("%d",&choice);
         if(choice!=1 && choice!=2 && choice!=3){
-            printf("please chose one among the listed modes (among 1,2,3)\n");
+            printf("please chose one among the listed modes (1/2/3)\n");
         }
         else if(choice==1){
         multiplayer();
@@ -35,15 +36,13 @@ int main() {
             return 0;
         }
     }
-    return 0;
 }
 
 void playBot(){
     int a[3][3];
     bool gameOver = false;
     bool isBot=false;
-    time_t startTime;
-
+    
     // initialize the board
     for(int row = 0; row < 3; row++) {
         for(int coln = 0; coln < 3; coln++) {
@@ -53,8 +52,8 @@ void playBot(){
 
     int turns = 9;  // total no. of turns
     while(turns > 0 && !gameOver) {
-        display(a);
-        int row, coln;
+        display(a,turns);
+        int row, coln, move;
 
         // check current player
         if(turns % 2 == 0) {
@@ -65,10 +64,10 @@ void playBot(){
         } else {
             isBot=false;
             printf("X to play\n");
-            printf("Enter your move (row & column): ");
-            scanf("%d %d", &row, &coln);
-
-            if(!validateMove(row,coln,a,turns,isBot)){
+            printf("Enter your move: ");
+            scanf("%d", &move);
+            convertMoves(move,&row,&coln);
+            if(!validateMove(row,coln,a,isBot)){
             continue;
             }
             play(a, row, coln, turns);
@@ -76,11 +75,11 @@ void playBot(){
         }
         // check winner
         if(win(a)) {
-            display(a);
+            display(a,turns);
             if(turns % 2 == 0) {
-                printf("X wins!\n");
+                printf("You win!\n");
             } else {
-                printf("O wins!\n");
+                printf("Bot wins!\n");
             }
             gameOver = true;
         }
@@ -106,7 +105,7 @@ void multiplayer(){
 
     int turns = 9;  // Total no. of turns
     while(turns > 0 && !gameOver) {
-        display(a);
+        display(a,turns);
 
         // check current player
         if(turns % 2 == 0) {
@@ -116,12 +115,13 @@ void multiplayer(){
         }
 
         // accept player input
-        int row, coln;
-        printf("Enter your move (row & column): ");
-        scanf("%d %d", &row, &coln);
+        int row, coln,move;
+        printf("Enter your move : ");
+        scanf("%d", &move);
+        convertMoves(move,&row,&coln);
 
         // check input
-        if(!validateMove(row,coln,a,turns,isBot)){
+        if(!validateMove(row,coln,a,isBot)){
             continue;
         }
         // play move
@@ -130,7 +130,7 @@ void multiplayer(){
 
         // check winner
         if(win(a)) {
-            display(a);
+            display(a,turns);
             if(turns % 2 == 0) {
                 printf("X wins!\n");
             } else {
@@ -177,29 +177,48 @@ bool win(int a[][3]) {
     return false;
 }
 
-void display(int a[][3]) {
-
-    printf("\n\t-------------------------------\n");
-    for(int i = 0; i < 3; i++) {
-        printf("\t|");
-        for(int j = 0; j < 3; j++) {
-            if(a[i][j] == 7) {
-                printf("    -    |");
-            } else if(a[i][j] == 0) {
-                printf("    O    |");
-            } else {
-                printf("    X    |");
-            }
-        }
+void display(int a[][3],int turns) {
+    if(turns==9){
+        int n=1;
         printf("\n\t-------------------------------\n");
+        for(int i = 0; i < 3; i++) {
+            printf("\t|");
+            for(int j = 0; j < 3; j++) {
+                    printf("    %d    |",n);
+                    n++;
+            }
+            printf("\n\t-------------------------------\n");
+        }
+        printf("\n");
     }
-    printf("\n");
+    else{
+        printf("\n\t-------------------------------\n");
+        for(int i = 0; i < 3; i++) {
+            printf("\t|");
+            for(int j = 0; j < 3; j++) {
+                if(a[i][j] == 7) {
+                    printf("    -    |");
+                } else if(a[i][j] == 0) {
+                    printf("    O    |");
+                } else {
+                    printf("    X    |");
+                }
+            }
+            printf("\n\t-------------------------------\n");
+        }
+        printf("\n");
+    }
 }
 
-bool validateMove(int row,int coln,int a[][3],int turns,bool isBot){
+void convertMoves(int move, int *row,int *coln){
+    *row=(move-1)/3;
+    *coln=(move-1)%3;
+}
+
+bool validateMove(int row,int coln,int a[][3],bool isBot){
             if(row < 0 || row >= 3 || coln < 0 || coln >= 3) {
             if(!isBot){
-                printf("\n\nInvalid move!!! Choose values between 0 & 2.\n");
+                printf("\n\nInvalid move!!! Choose values between 1 to 9.\n");
             }
             return false;
         }
@@ -218,7 +237,7 @@ void botMove(int a[][3]){
     do{
         row=rand()%3;
         coln=rand()%3;
-    }while(!validateMove(row,coln,a,turns,isBot));
+    }while(!validateMove(row,coln,a,isBot));
     play(a, row, coln, turns);
 }
 
